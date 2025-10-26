@@ -13,7 +13,7 @@ Upload an insurance PDF, ask questions in natural language, and get instant, acc
 - 🔍 **Smart Understanding:** Extracts and embeds your PDF data for contextual understanding.  
 - 💬 **Ask Anything:** Get precise answers about coverage, exclusions, claim process, and more.  
 - ⚙️ **LangChain + FAISS:** Uses vector embeddings for fast and accurate context retrieval.  
-- 🌐 **Built with Flask (or Django):** Lightweight backend for serving your AI queries.
+- 🌐 **Built with Flask :** Lightweight backend for serving your AI queries.
 
 ---
 
@@ -22,7 +22,7 @@ Upload an insurance PDF, ask questions in natural language, and get instant, acc
 | Component | Technology |
 |------------|-------------|
 | Frontend | HTML, CSS, JavaScript |
-| Backend | Flask / Django |
+| Backend | Flask  |
 | LLM | Google Gemini API |
 | Embeddings | Google Generative AI Embeddings |
 | Vector Store | FAISS |
@@ -47,7 +47,7 @@ Upload an insurance PDF, ask questions in natural language, and get instant, acc
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/insurance-gemini-assistant.git
+git clone https://github.com/kartikshing22/insurance-ai-assistant.git
 cd insurance-gemini-assistant
 
 # Create a virtual environment
@@ -58,7 +58,8 @@ source env/bin/activate
 pip install -r requirements.txt
 
 # Add your API key
-export GOOGLE_API_KEY="your_google_gemini_key"
+echo -e "GOOGLE_API_KEY=your_key\nFAISS_INDEX_PATH=/vector_store/faiss_index" > .env
+
 
 # Run the app
 python app.py
