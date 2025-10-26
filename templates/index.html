@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Policy QnA</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        h1 { color: #007bff; text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 25px; padding: 20px; border: 1px solid #ddd; border-radius: 6px; }
+        .section h2 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        input[type="file"], textarea, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        #response-area { min-height: 100px; padding: 15px; background-color: #e9ecef; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
+        .status-message { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; }
+        .status-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        .status-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .status-error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; display: none; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📑 GenAI Insurance Policy QnA</h1>
+        
+        <div id="initial-status" class="status-message status-info">
+            {% if index_exists %}
+            ✅ **Index Loaded:** An existing FAISS index was found. You can start asking questions.
+            {% else %}
+            ⚠️ **No Index:** Please upload your policy PDFs to create the searchable index.
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>1. Upload Policy PDF</h2>
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".pdf" required>
+                <button type="submit" id="upload-btn">Upload and Create Index</button>
+            </form>
+            <div id="upload-status" class="status-message" style="display:none;"></div>
+            <div class="loader" id="upload-loader"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Ask a Question</h2>
+            <form id="qna-form">
+                <textarea id="question-input" rows="3" placeholder="e.g., What is the claim settlement ratio mentioned in this policy?" required></textarea>
+                <button type="submit" id="ask-btn">Get Answer</button>
+            </form>
+            <div class="loader" id="qna-loader"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. AI Model Response</h2>
+            <pre id="response-area">The model's contextual answer will appear here.</pre>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const statusDiv = document.getElementById('upload-status');
+            const loader = document.getElementById('upload-loader');
+            const initialStatus = document.getElementById('initial-status');
+            
+            statusDiv.style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
+                const data = await response.json();
+                loader.style.display = 'none';
+                statusDiv.style.display = 'block';
+
+                if (response.ok) {
+                    statusDiv.className = 'status-message status-success';
+                    statusDiv.textContent = data.message;
+                    initialStatus.className = 'status-message status-success';
+                    initialStatus.innerHTML = 'You can now ask questions about the uploaded document(s).';
+                } else {
+                    statusDiv.className = 'status-message status-error';
+                    statusDiv.textContent = 'Upload failed: ' + data.error;
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'status-message status-error';
+                statusDiv.textContent = 'Network error: ' + error.message;
+            }
+        });
+
+        document.getElementById('qna-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const questionInput = document.getElementById('question-input');
+            const responseArea = document.getElementById('response-area');
+            const loader = document.getElementById('qna-loader');
+            
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            responseArea.textContent = 'Generating answer...';
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                const data = await response.json();
+                loader.style.display = 'none';
+
+                if (response.ok) {
+                    responseArea.textContent = data.answer;
+                } else {
+                    responseArea.textContent = 'Error: ' + data.answer || data.error;
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                responseArea.textContent = 'Network error while fetching answer: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
